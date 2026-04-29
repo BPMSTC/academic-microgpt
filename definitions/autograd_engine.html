@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autograd Engine - Deep Learning Definition</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-purple-100 to-pink-50 min-h-screen text-gray-800">
+  <div class="max-w-3xl mx-auto py-10 px-6">
+    <h1 class="text-4xl font-extrabold text-blue-700 mb-4 drop-shadow">Autograd Engine</h1>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-8 border-blue-400">
+      <p class="text-lg mb-2"><strong>Autograd</strong> (Automatic Differentiation) is the heart of modern deep learning frameworks. It automatically computes gradients (derivatives) for all operations in a computation graph, enabling neural networks to learn from data via backpropagation.</p>
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Tracks every mathematical operation performed on data (tensors/values) as nodes in a graph.</li>
+        <li>Builds a <span class="font-semibold text-purple-700">computation graph</span> where each node represents a value or operation.</li>
+        <li>During the backward pass, it traverses this graph in reverse to compute gradients for each parameter, which are used to update the model.</li>
+        <li>Without autograd, training deep neural networks would be error-prone and extremely tedious.</li>
+      </ul>
+    </div>
+    <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+      <div class="flex-1">
+        <img src="https://raw.githubusercontent.com/BPMSTC/academic-microgpt-assets/main/autograd_computation_graph.png" alt="Autograd Computation Graph" class="rounded-lg border-2 border-purple-300 shadow-md">
+        <div class="text-sm text-gray-600 mt-2 text-center">Figure: Example of a computation graph for <span class="italic">z = (x + y) * y</span>. Each node stores its value and how it was computed. During backpropagation, gradients flow backward through the graph.</div>
+      </div>
+      <div class="flex-1 bg-gradient-to-br from-purple-100 to-blue-50 rounded-lg p-4 shadow-inner">
+        <h2 class="text-xl font-bold text-purple-700 mb-2">How It Works (Step-by-Step)</h2>
+        <ol class="list-decimal pl-6 space-y-2">
+          <li><span class="font-semibold text-blue-700">Forward Pass:</span> Compute the output by applying operations (e.g., addition, multiplication) and record how each value was produced. This builds the computation graph dynamically as the code runs.</li>
+          <li><span class="font-semibold text-blue-700">Backward Pass:</span> Starting from the final output (usually the loss), recursively apply the chain rule to compute gradients for each node. This is done by traversing the graph in reverse order.</li>
+          <li><span class="font-semibold text-blue-700">Parameter Update:</span> Use the gradients to update model parameters (weights) and improve performance. This is typically handled by an optimizer like Adam.</li>
+        </ol>
+        <div class="mt-4 flex justify-center">
+          <img src="https://raw.githubusercontent.com/BPMSTC/academic-microgpt-assets/main/autograd_stepbystep.png" alt="Autograd Step-by-Step" class="w-64 rounded border border-blue-200">
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-8 border-purple-400">
+      <h2 class="text-2xl font-bold text-purple-700 mb-2">Code Example from <span class="font-mono text-blue-700">microgpt.py</span></h2>
+      <p class="mb-2">Below is a simplified excerpt from our actual <span class="font-mono">Value</span> class, which implements autograd in <span class="font-mono">microgpt.py</span>:</p>
+      <pre><code class="python">class Value:
+    def __init__(self, data, children=(), local_grads=()):
+        self.data = data
+        self.grad = 0
+        self._children = children
+        self._local_grads = local_grads
+
+    def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        return Value(self.data + other.data, (self, other), (1, 1))
+
+    def __mul__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        return Value(self.data * other.data, (self, other), (other.data, self.data))
+
+    def backward(self):
+        topo = []
+        visited = set()
+        def build_topo(v):
+            if v not in visited:
+                visited.add(v)
+                for child in v._children:
+                    build_topo(child)
+                topo.append(v)
+        build_topo(self)
+        self.grad = 1
+        for v in reversed(topo):
+            for child, local_grad in zip(v._children, v._local_grads):
+                child.grad += local_grad * v.grad
+</code></pre>
+      <div class="text-sm text-gray-600 mt-2">This code builds a computation graph as you perform operations, and then computes gradients for every value in the graph when you call <span class="font-mono">backward()</span>.</div>
+    </div>
+    <div class="bg-gradient-to-r from-blue-100 via-purple-50 to-pink-100 rounded-xl shadow-lg p-6 mb-6 border-l-8 border-pink-400">
+      <h2 class="text-2xl font-bold text-pink-700 mb-2">Why Autograd Matters</h2>
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Enables efficient and correct training of neural networks by automating gradient computation.</li>
+        <li>Reduces human error and makes experimentation with new architectures much easier and safer.</li>
+        <li>Forms the backbone of modern deep learning libraries (e.g., PyTorch, TensorFlow, and our own <span class="font-mono">microgpt.py</span>).</li>
+        <li>Allows for rapid prototyping and innovation in AI research and applications.</li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-8 border-blue-400">
+      <h2 class="text-2xl font-bold text-blue-700 mb-2">Try It Yourself!</h2>
+      <p class="mb-2">Here's a minimal example you can run directly from our codebase:</p>
+      <pre><code class="python"># Forward pass
+x = Value(2.0)
+y = Value(3.0)
+z = (x + y) * y
+
+# Backward pass (compute gradients)
+z.backward()
+print(x.grad, y.grad)  # Gradients of z w.r.t x and y
+</code></pre>
+      <div class="text-sm text-gray-600 mt-2">This will print the gradients for <span class="font-mono">x</span> and <span class="font-mono">y</span> with respect to <span class="font-mono">z</span>, showing how autograd propagates derivatives backward through the computation graph.</div>
+    </div>
+  </div>
+</body>
+</html>
