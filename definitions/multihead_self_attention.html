@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Head Self-Attention - Deep Learning Definition</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-purple-100 to-pink-50 min-h-screen text-gray-800">
+  <div class="max-w-3xl mx-auto py-10 px-6">
+    <h1 class="text-4xl font-extrabold text-blue-700 mb-4 drop-shadow">Multi-Head Self-Attention</h1>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-8 border-blue-400">
+      <p class="text-lg mb-2"><strong>Multi-head self-attention</strong> is a key mechanism in transformer models like GPT. It allows the model to focus on different parts of the input sequence simultaneously, capturing various relationships and patterns in the data.</p>
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Each "head" learns to attend to different positions in the sequence.</li>
+        <li>Helps the model understand context, dependencies, and meaning across the input.</li>
+        <li>Outputs from all heads are combined to form a richer representation.</li>
+      </ul>
+    </div>
+    <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+      <div class="flex-1">
+        <img src="https://raw.githubusercontent.com/BPMSTC/academic-microgpt/main/definitions/images/multihead_attention.png" alt="Multi-Head Self-Attention Diagram" class="rounded-lg border-2 border-purple-300 shadow-md">
+        <div class="text-sm text-gray-600 mt-2 text-center">Figure: Each attention head processes the input sequence independently, then their outputs are concatenated and projected to form the final representation.</div>
+      </div>
+      <div class="flex-1 bg-gradient-to-br from-purple-100 to-blue-50 rounded-lg p-4 shadow-inner">
+        <h2 class="text-xl font-bold text-purple-700 mb-2">How It Works (Step-by-Step)</h2>
+        <ol class="list-decimal pl-6 space-y-2">
+          <li><span class="font-semibold text-blue-700">Input Embeddings:</span> Each token in the sequence is converted to a vector.</li>
+          <li><span class="font-semibold text-blue-700">Linear Projections:</span> For each head, the input is projected into queries (Q), keys (K), and values (V).</li>
+          <li><span class="font-semibold text-blue-700">Attention Scores:</span> Each head computes attention scores using Q and K, then applies them to V.</li>
+          <li><span class="font-semibold text-blue-700">Concatenation:</span> Outputs from all heads are concatenated and linearly transformed.</li>
+        </ol>
+        <div class="mt-4 flex justify-center">
+          <img src="https://raw.githubusercontent.com/BPMSTC/academic-microgpt/main/definitions/images/multihead_attention_stepbystep.png" alt="Multi-Head Attention Step-by-Step" class="w-64 rounded border border-blue-200">
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-8 border-purple-400">
+      <h2 class="text-2xl font-bold text-purple-700 mb-2">Code Example from <span class="font-mono text-blue-700">microgpt.py</span></h2>
+      <p class="mb-2">Below is a simplified excerpt from our <span class="font-mono">gpt()</span> function, showing how multi-head self-attention is implemented:</p>
+      <pre><code class="python">for li in range(n_layer):
+    # Multi-head Attention block
+    x_residual = x
+    x = rmsnorm(x)
+    q = linear(x, state_dict[f'layer{li}.attn_wq'])
+    k = linear(x, state_dict[f'layer{li}.attn_wk'])
+    v = linear(x, state_dict[f'layer{li}.attn_wv'])
+    keys[li].append(k)
+    values[li].append(v)
+    x_attn = []
+    for h in range(n_head):
+        hs = h * head_dim
+        q_h = q[hs:hs+head_dim]
+        k_h = [ki[hs:hs+head_dim] for ki in keys[li]]
+        v_h = [vi[hs:hs+head_dim] for vi in values[li]]
+        attn_logits = [sum(q_h[j] * k_h[t][j] for j in range(head_dim)) / head_dim**0.5 for t in range(len(k_h))]
+        attn_weights = softmax(attn_logits)
+        head_out = [sum(attn_weights[t] * v_h[t][j] for t in range(len(v_h))) for j in range(head_dim)]
+        x_attn.extend(head_out)
+    x = linear(x_attn, state_dict[f'layer{li}.attn_wo'])
+    x = [a + b for a, b in zip(x, x_residual)]
+</code></pre>
+      <div class="text-sm text-gray-600 mt-2">Each head processes a different "view" of the input, and their outputs are combined for a richer understanding of context.</div>
+    </div>
+    <div class="bg-gradient-to-r from-blue-100 via-purple-50 to-pink-100 rounded-xl shadow-lg p-6 mb-6 border-l-8 border-pink-400">
+      <h2 class="text-2xl font-bold text-pink-700 mb-2">Why Multi-Head Self-Attention Matters</h2>
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Allows the model to capture complex relationships in the data.</li>
+        <li>Improves the ability to model long-range dependencies and context.</li>
+        <li>Is a foundational building block for modern transformer architectures like GPT, BERT, and more.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adam Optimizer - Deep Learning Definition</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 via-blue-100 to-pink-50 min-h-screen text-gray-800">
+  <div class="max-w-3xl mx-auto py-10 px-6">
+    <h1 class="text-4xl font-extrabold text-yellow-700 mb-4 drop-shadow">Adam Optimizer</h1>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-8 border-yellow-400">
+      <p class="text-lg mb-2"><strong>Adam</strong> (Adaptive Moment Estimation) is a popular optimization algorithm used to train deep learning models. It combines the benefits of two other methods: AdaGrad and RMSProp, adapting the learning rate for each parameter.</p>
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Maintains moving averages of both the gradients (first moment) and their squares (second moment).</li>
+        <li>Adapts the learning rate for each parameter, making training faster and more stable.</li>
+        <li>Widely used in training neural networks due to its efficiency and reliability.</li>
+      </ul>
+    </div>
+    <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+      <div class="flex-1">
+        <img src="https://raw.githubusercontent.com/BPMSTC/academic-microgpt/main/definitions/images/adam_optimizer.png" alt="Adam Optimizer Diagram" class="rounded-lg border-2 border-yellow-300 shadow-md">
+        <div class="text-sm text-gray-600 mt-2 text-center">Figure: Adam optimizer updates each parameter using estimates of the first and second moments of the gradients.</div>
+      </div>
+      <div class="flex-1 bg-gradient-to-br from-blue-100 to-yellow-50 rounded-lg p-4 shadow-inner">
+        <h2 class="text-xl font-bold text-yellow-700 mb-2">How It Works (Step-by-Step)</h2>
+        <ol class="list-decimal pl-6 space-y-2">
+          <li><span class="font-semibold text-yellow-700">Compute Gradients:</span> Calculate the gradient of the loss with respect to each parameter.</li>
+          <li><span class="font-semibold text-yellow-700">Update Moments:</span> Update the moving averages of the gradients and their squares.</li>
+          <li><span class="font-semibold text-yellow-700">Bias Correction:</span> Correct the bias in the moment estimates.</li>
+          <li><span class="font-semibold text-yellow-700">Parameter Update:</span> Update each parameter using the adapted learning rate.</li>
+        </ol>
+        <div class="mt-4 flex justify-center">
+          <img src="https://raw.githubusercontent.com/BPMSTC/academic-microgpt/main/definitions/images/adam_optimizer_stepbystep.png" alt="Adam Optimizer Step-by-Step" class="w-64 rounded border border-yellow-200">
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-8 border-yellow-400">
+      <h2 class="text-2xl font-bold text-yellow-700 mb-2">Code Example from <span class="font-mono text-yellow-700">microgpt.py</span></h2>
+      <p class="mb-2">Below is a simplified excerpt from our training loop, showing the Adam optimizer update:</p>
+      <pre><code class="python"># Adam optimizer update
+lr_t = learning_rate * (1 - step / num_steps)
+for i, p in enumerate(params):
+    m[i] = beta1 * m[i] + (1 - beta1) * p.grad
+    v[i] = beta2 * v[i] + (1 - beta2) * p.grad ** 2
+    m_hat = m[i] / (1 - beta1 ** (step + 1))
+    v_hat = v[i] / (1 - beta2 ** (step + 1))
+    p.data -= lr_t * m_hat / (v_hat ** 0.5 + eps_adam)
+    p.grad = 0
+</code></pre>
+      <div class="text-sm text-gray-600 mt-2">Adam adapts the learning rate for each parameter, making training more robust and efficient.</div>
+    </div>
+    <div class="bg-gradient-to-r from-yellow-100 via-blue-50 to-pink-100 rounded-xl shadow-lg p-6 mb-6 border-l-8 border-pink-400">
+      <h2 class="text-2xl font-bold text-pink-700 mb-2">Why Adam Optimizer Matters</h2>
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Speeds up convergence and helps avoid local minima.</li>
+        <li>Reduces the need for manual learning rate tuning.</li>
+        <li>Is the default optimizer for many deep learning projects.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

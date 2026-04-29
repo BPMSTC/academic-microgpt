@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backpropagation - Deep Learning Definition</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</head>
+<body class="bg-gradient-to-br from-pink-50 via-blue-100 to-yellow-50 min-h-screen text-gray-800">
+  <div class="max-w-3xl mx-auto py-10 px-6">
+    <h1 class="text-4xl font-extrabold text-pink-700 mb-4 drop-shadow">Backpropagation</h1>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-8 border-pink-400">
+      <p class="text-lg mb-2"><strong>Backpropagation</strong> is the algorithm used to compute gradients for all parameters in a neural network. It enables efficient training by applying the chain rule to propagate errors backward through the computation graph.</p>
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Starts from the loss (output) and works backward to compute gradients for each parameter.</li>
+        <li>Uses the chain rule of calculus to efficiently compute derivatives.</li>
+        <li>Is the foundation of training deep neural networks.</li>
+      </ul>
+    </div>
+    <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+      <div class="flex-1">
+        <img src="https://raw.githubusercontent.com/BPMSTC/academic-microgpt/main/definitions/images/backpropagation.png" alt="Backpropagation Diagram" class="rounded-lg border-2 border-pink-300 shadow-md">
+        <div class="text-sm text-gray-600 mt-2 text-center">Figure: Backpropagation computes gradients by traversing the computation graph in reverse, from output to input.</div>
+      </div>
+      <div class="flex-1 bg-gradient-to-br from-blue-100 to-pink-50 rounded-lg p-4 shadow-inner">
+        <h2 class="text-xl font-bold text-pink-700 mb-2">How It Works (Step-by-Step)</h2>
+        <ol class="list-decimal pl-6 space-y-2">
+          <li><span class="font-semibold text-pink-700">Forward Pass:</span> Compute the output of the network and the loss.</li>
+          <li><span class="font-semibold text-pink-700">Backward Pass:</span> Starting from the loss, recursively compute gradients for each node using the chain rule.</li>
+          <li><span class="font-semibold text-pink-700">Parameter Update:</span> Use the computed gradients to update the model parameters.</li>
+        </ol>
+        <div class="mt-4 flex justify-center">
+          <img src="https://raw.githubusercontent.com/BPMSTC/academic-microgpt/main/definitions/images/backpropagation_stepbystep.png" alt="Backpropagation Step-by-Step" class="w-64 rounded border border-pink-200">
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-8 border-pink-400">
+      <h2 class="text-2xl font-bold text-pink-700 mb-2">Code Example from <span class="font-mono text-pink-700">microgpt.py</span></h2>
+      <p class="mb-2">Below is a simplified excerpt from our <span class="font-mono">Value</span> class, showing the backward method:</p>
+      <pre><code class="python">def backward(self):
+    topo = []
+    visited = set()
+    def build_topo(v):
+        if v not in visited:
+            visited.add(v)
+            for child in v._children:
+                build_topo(child)
+            topo.append(v)
+    build_topo(self)
+    self.grad = 1
+    for v in reversed(topo):
+        for child, local_grad in zip(v._children, v._local_grads):
+            child.grad += local_grad * v.grad
+</code></pre>
+      <div class="text-sm text-gray-600 mt-2">Backpropagation traverses the computation graph in reverse order, applying the chain rule to compute gradients for every node.</div>
+    </div>
+    <div class="bg-gradient-to-r from-pink-100 via-blue-50 to-yellow-100 rounded-xl shadow-lg p-6 mb-6 border-l-8 border-yellow-400">
+      <h2 class="text-2xl font-bold text-yellow-700 mb-2">Why Backpropagation Matters</h2>
+      <ul class="list-disc pl-6 space-y-1">
+        <li>Enables efficient training of deep neural networks.</li>
+        <li>Allows models to learn from data by adjusting parameters to minimize loss.</li>
+        <li>Is the backbone of all modern deep learning optimization.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
