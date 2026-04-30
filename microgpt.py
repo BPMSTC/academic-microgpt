@@ -6,10 +6,25 @@ Everything else is just efficiency.
 @karpathy
 """
 
+# =========================
+# microgpt.py
+#
+# This file implements a minimal, readable version of a GPT (Generative Pretrained Transformer)
+# language model, including training and inference, with no dependencies beyond Python's standard library.
+#
+# This is intended as an educational walkthrough for students and beginners.
+#
+# Each section is heavily commented to explain the purpose and mechanics of every step.
+# =========================
+
 import os       # os.path.exists
 import math     # math.log, math.exp
 import random   # random.seed, random.choices, random.gauss, random.shuffle
 random.seed(42) # Let there be order among chaos
+
+# ========== DATASET LOADING ==========
+# We need a dataset to train on. Here, we use a simple text file (input.txt) containing names.
+# If input.txt does not exist, we download a list of names from the internet.
 
 # Let there be a Dataset `docs`: list[str] of documents (e.g. a list of names)
 if not os.path.exists('input.txt'):
@@ -20,11 +35,17 @@ docs = [line.strip() for line in open('input.txt') if line.strip()]
 random.shuffle(docs)
 print(f"num docs: {len(docs)}")
 
+# Each line in docs is a training example (a name). We shuffle them for training.
+
 # Let there be a Tokenizer to translate strings to sequences of integers ("tokens") and back
 uchars = sorted(set(''.join(docs))) # unique characters in the dataset become token ids 0..n-1
 BOS = len(uchars) # token id for a special Beginning of Sequence (BOS) token
 vocab_size = len(uchars) + 1 # total number of unique tokens, +1 is for BOS
 print(f"vocab size: {vocab_size}")
+
+# uchars: list of unique characters in the dataset
+# BOS: special token for "beginning of sequence" (used to mark start/end)
+# vocab_size: total number of tokens (characters + BOS)
 
 # Let there be Autograd to recursively apply the chain rule through a computation graph
 class Value:
@@ -35,6 +56,9 @@ class Value:
         self.grad = 0                   # derivative of the loss w.r.t. this node, calculated in backward pass
         self._children = children       # children of this node in the computation graph
         self._local_grads = local_grads # local derivative of this node w.r.t. its children
+
+    # The Value class is a scalar node in a computation graph, supporting automatic differentiation.
+    # Each operation (add, multiply, etc.) creates a new Value node, tracking how it was computed.
 
     def __add__(self, other):
         other = other if isinstance(other, Value) else Value(other)
@@ -71,6 +95,8 @@ class Value:
             for child, local_grad in zip(v._children, v._local_grads):
                 child.grad += local_grad * v.grad
 
+        # backward() computes gradients for all nodes in the computation graph, starting from this node.
+
 # Initialize the parameters, to store the knowledge of the model
 n_layer = 1     # depth of the transformer neural network (number of layers)
 n_embd = 16     # width of the network (embedding dimension)
@@ -89,10 +115,25 @@ for i in range(n_layer):
 params = [p for mat in state_dict.values() for row in mat for p in row] # flatten params into a single list[Value]
 print(f"num params: {len(params)}")
 
+# Model hyperparameters:
+# - n_layer: number of transformer layers (depth)
+# - n_embd: embedding dimension (width of each vector)
+# - block_size: max sequence length (context window)
+# - n_head: number of self-attention heads
+# - head_dim: dimension of each attention head
+#
+# state_dict: dictionary of all model weights (matrices for embeddings, attention, MLP, etc.)
+# params: flat list of all parameters for optimization
+
 # Define the model architecture: a function mapping tokens and parameters to logits over what comes next
 # Follow GPT-2, blessed among the GPTs, with minor differences: layernorm -> rmsnorm, no biases, GeLU -> ReLU
+
+# ========== MODEL ARCHITECTURE ==========
+# The core of the GPT model: token and position embeddings, transformer blocks (attention + MLP), and output head.
 def linear(x, w):
     return [sum(wi * xi for wi, xi in zip(wo, x)) for wo in w]
+
+# linear(x, w): computes a linear transformation (matrix multiply) of input vector x with weight matrix w.
 
 def softmax(logits):
     max_val = max(val.data for val in logits)
@@ -100,10 +141,14 @@ def softmax(logits):
     total = sum(exps)
     return [e / total for e in exps]
 
+# softmax: converts logits to probabilities, normalizing and stabilizing for numerical safety.
+
 def rmsnorm(x):
     ms = sum(xi * xi for xi in x) / len(x)
     scale = (ms + 1e-5) ** -0.5
     return [xi * scale for xi in x]
+
+# rmsnorm: Root Mean Square Layer Normalization (normalizes the input vector).
 
 def gpt(token_id, pos_id, keys, values):
     tok_emb = state_dict['wte'][token_id] # token embedding
@@ -143,10 +188,21 @@ def gpt(token_id, pos_id, keys, values):
     logits = linear(x, state_dict['lm_head'])
     return logits
 
+# gpt(token_id, pos_id, keys, values):
+# - Computes the forward pass for a single token at a given position.
+# - Applies token and position embeddings, then passes through transformer layers (attention + MLP).
+# - Returns logits (predictions for next token).
+
 # Let there be Adam, the blessed optimizer and its buffers
 learning_rate, beta1, beta2, eps_adam = 0.01, 0.85, 0.99, 1e-8
 m = [0.0] * len(params) # first moment buffer
 v = [0.0] * len(params) # second moment buffer
+
+# Adam optimizer hyperparameters:
+# - learning_rate: how much to update parameters each step
+# - beta1, beta2: decay rates for moving averages
+# - eps_adam: small value to prevent division by zero
+# m, v: buffers for first and second moments (mean and uncentered variance of gradients)
 
 # Repeat in sequence
 num_steps = 1000 # number of training steps
@@ -183,6 +239,13 @@ for step in range(num_steps):
 
     print(f"step {step+1:4d} / {num_steps:4d} | loss {loss.data:.4f}", end='\r')
 
+    # === TRAINING LOOP EXPLANATION ===
+    # 1. Select a document (name), tokenize it, and add BOS tokens at start and end.
+    # 2. For each position in the sequence, run the model to predict the next token and compute the loss.
+    # 3. Backpropagate the loss to compute gradients for all parameters.
+    # 4. Update parameters using the Adam optimizer (with learning rate decay).
+    # 5. Print progress (step and current loss).
+
 # Inference: may the model babble back to us
 temperature = 0.5 # in (0, 1], control the "creativity" of generated text, low to high
 print("\n--- inference (new, hallucinated names) ---")
@@ -198,3 +261,10 @@ for sample_idx in range(20):
             break
         sample.append(uchars[token_id])
     print(f"sample {sample_idx+1:2d}: {''.join(sample)}")
+
+# ========== INFERENCE EXPLANATION ==========
+# After training, we can use the model to generate new names:
+# - Start with the BOS token.
+# - For each position, predict the next token using the model and sample from the probability distribution.
+# - Stop if BOS is generated (end of sequence) or block_size is reached.
+# - Print the generated name.
